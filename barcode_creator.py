@@ -12,58 +12,58 @@ import base64
 from io import BytesIO
 
 # Variável global para pasta padrão
-_PASTA_PADRAO = './codigos_barras'
+_DEFAULT_FOLDER = './codigos_barras'
 
 
-def definir_pasta_padrao(pasta: str) -> None:
+def set_default_folder(folder: str) -> None:
     """
     Define a pasta padrão para salvar códigos de barras
 
     Args:
-        pasta (str): Caminho da pasta que será usada como padrão
+        folder (str): Caminho da pasta que será usada como padrão
     """
-    global _PASTA_PADRAO
-    _PASTA_PADRAO = os.path.abspath(pasta)
-    os.makedirs(_PASTA_PADRAO, exist_ok=True)
-    print(f"📁 Pasta padrão definida: {_PASTA_PADRAO}")
+    global _DEFAULT_FOLDER
+    _DEFAULT_FOLDER = os.path.abspath(folder)
+    os.makedirs(_DEFAULT_FOLDER, exist_ok=True)
+    print(f"📁 Pasta padrão definida: {_DEFAULT_FOLDER}")
 
 
-def gerar_codigo_barras(
-        dados: str,
-        tipo_codigo: Literal['auto', 'code128', 'code39', 'ean13', 'ean8', 'upc'] = 'auto',
-        formato_saida: Literal['png', 'svg'] = 'png',
-        nome_arquivo: Optional[str] = None,
-        pasta_destino: Optional[str] = None,
-        opcoes_customizacao: Optional[dict] = None
+def generate_barcode(
+        data: str,
+        code_type: Literal['auto', 'code128', 'code39', 'ean13', 'ean8', 'upc'] = 'auto',
+        output_format: Literal['png', 'svg'] = 'png',
+        file_name: Optional[str] = None,
+        destination_folder: Optional[str] = None,
+        customization_options: Optional[dict] = None
 ) -> str:
     """
     Gera código de barras completo com todas as opções
 
     Args:
-        dados (str): Texto ou números para gerar o código de barras
-        tipo_codigo (str): Tipo do código de barras
-        formato_saida (str): 'png' ou 'svg'
-        nome_arquivo (str, optional): Nome personalizado do arquivo
-        pasta_destino (str, optional): Pasta específica (usa padrão se None)
-        opcoes_customizacao (dict, optional): Opções para customizar aparência
+        data (str): Texto ou números para gerar o código de barras
+        code_type (str): Tipo do código de barras
+        output_format (str): 'png' ou 'svg'
+        file_name (str, optional): Nome personalizado do arquivo
+        destination_folder (str, optional): Pasta específica (usa padrão se None)
+        customization_options (dict, optional): Opções para customizar aparência
 
     Returns:
         str: Caminho completo do arquivo gerado
     """
 
     # Usar pasta padrão se não especificada
-    pasta = pasta_destino if pasta_destino is not None else _PASTA_PADRAO
-    os.makedirs(pasta, exist_ok=True)
+    folder = destination_folder if destination_folder is not None else _DEFAULT_FOLDER
+    os.makedirs(folder, exist_ok=True)
 
     # Detectar tipo automaticamente se necessário
-    if tipo_codigo == 'auto':
-        tipo_codigo = _detectar_tipo_codigo(dados)
+    if code_type == 'auto':
+        code_type = _detect_code_type(data)
 
     # Validar e preparar dados
-    dados_processados = _validar_e_processar_dados(dados, tipo_codigo)
+    processed_data = _validate_and_process_data(data, code_type)
 
     # Selecionar classe do código de barras
-    classes_codigo = {
+    code_classes = {
         'code128': Code128,
         'code39': Code39,
         'ean13': EAN13,
@@ -71,55 +71,55 @@ def gerar_codigo_barras(
         'upc': UPCA
     }
 
-    if tipo_codigo not in classes_codigo:
-        raise ValueError(f"Tipo de código não suportado: {tipo_codigo}")
+    if code_type not in code_classes:
+        raise ValueError(f"Tipo de código não suportado: {code_type}")
 
     # Configurar writer
-    writer = ImageWriter() if formato_saida == 'png' else SVGWriter()
+    writer = ImageWriter() if output_format == 'png' else SVGWriter()
 
     # Aplicar opções de customização
-    if opcoes_customizacao:
-        for opcao, valor in opcoes_customizacao.items():
-            if hasattr(writer, opcao):
-                setattr(writer, opcao, valor)
+    if customization_options:
+        for option, value in customization_options.items():
+            if hasattr(writer, option):
+                setattr(writer, option, value)
 
     try:
         # Gerar código de barras
-        codigo_barras = classes_codigo[tipo_codigo](dados_processados, writer=writer)
+        barcode = code_classes[code_type](processed_data, writer=writer)
 
         # Definir nome do arquivo
-        if not nome_arquivo:
-            nome_arquivo = f"barcode_{dados_processados[:10]}_{tipo_codigo}"
+        if not file_name:
+            file_name = f"barcode_{processed_data[:10]}_{code_type}"
 
         # Remover caracteres inválidos do nome do arquivo
-        nome_arquivo = re.sub(r'[<>:"/\\|?*]', '_', nome_arquivo)
+        file_name = re.sub(r'[<>:"/\\|?*]', '_', file_name)
 
         # Caminho completo
-        caminho_arquivo = os.path.join(pasta, nome_arquivo)
+        file_path = os.path.join(folder, file_name)
 
         # Salvar arquivo
-        codigo_barras.save(caminho_arquivo)
+        barcode.save(file_path)
 
         # Retornar caminho completo com extensão
-        extensao = '.png' if formato_saida == 'png' else '.svg'
-        caminho_completo = caminho_arquivo + extensao
+        extension = '.png' if output_format == 'png' else '.svg'
+        complete_path = file_path + extension
 
-        return caminho_completo
+        return complete_path
 
     except Exception as e:
         raise Exception(f"Erro ao gerar código de barras: {str(e)}")
 
 
-def gerar_codigo_limpo(
-        dados: str,
-        pasta_destino: Optional[str] = None
+def generate_clean_barcode(
+        data: str,
+        destination_folder: Optional[str] = None
 ) -> dict:
     """
     Gera código de barras otimizado para exibição limpa
 
     Args:
-        dados (str): Texto ou números para o código
-        pasta_destino (str, optional): Pasta específica (usa padrão se None)
+        data (str): Texto ou números para o código
+        destination_folder (str, optional): Pasta específica (usa padrão se None)
 
     Returns:
         dict: Dicionário com arquivos e códigos gerados
@@ -129,35 +129,35 @@ def gerar_codigo_limpo(
     """
 
     # Usar pasta padrão se não especificada
-    pasta = pasta_destino if pasta_destino is not None else _PASTA_PADRAO
-    os.makedirs(pasta, exist_ok=True)
+    folder = destination_folder if destination_folder is not None else _DEFAULT_FOLDER
+    os.makedirs(folder, exist_ok=True)
 
-    resultados = {}
+    results = {}
 
     # Detectar melhor tipo de código
-    tipo_codigo = _detectar_tipo_codigo(dados)
-    dados_processados = _validar_e_processar_dados(dados, tipo_codigo)
+    code_type = _detect_code_type(data)
+    processed_data = _validate_and_process_data(data, code_type)
 
     # 1. PNG - Sempre limpo e confiável
-    writer_png = ImageWriter()
-    codigo_png = Code128(dados_processados, writer=writer_png)
-    caminho_png = os.path.join(pasta, f"barcode_{dados_processados[:10]}")
-    codigo_png.save(caminho_png)
-    resultados['png'] = caminho_png + '.png'
+    png_writer = ImageWriter()
+    png_barcode = Code128(processed_data, writer=png_writer)
+    png_path = os.path.join(folder, f"barcode_{processed_data[:10]}")
+    png_barcode.save(png_path)
+    results['png'] = png_path + '.png'
 
     # 2. Base64 - Para embed direto no HTML
     buffer = BytesIO()
-    codigo_png.write(buffer)
+    png_barcode.write(buffer)
     buffer.seek(0)
     img_base64 = base64.b64encode(buffer.read()).decode()
-    resultados[
+    results[
         'base64'] = f'<img src="data:image/png;base64,{img_base64}" alt="Barcode" style="max-width:100%;height:auto;">'
 
     # 3. HTML completo - Para visualização perfeita
     html_content = f"""<!DOCTYPE html>
 <html>
 <head>
-    <title>Código de Barras - {dados}</title>
+    <title>Código de Barras - {data}</title>
     <style>
         body {{ margin: 0; padding: 20px; background: #f5f5f5; font-family: Arial, sans-serif; }}
         .container {{ max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
@@ -171,144 +171,144 @@ def gerar_codigo_limpo(
     <div class="container">
         <h2 style="text-align: center; color: #333;">Código de Barras</h2>
         <div class="barcode">
-            <img src="{os.path.basename(resultados['png'])}" alt="Código de Barras">
+            <img src="{os.path.basename(results['png'])}" alt="Código de Barras">
         </div>
         <div class="info">
-            <div class="code">{dados}</div>
+            <div class="code">{data}</div>
             <p>Código gerado automaticamente</p>
         </div>
     </div>
 </body>
 </html>"""
 
-    arquivo_html = os.path.join(pasta, f"barcode_{dados_processados[:10]}.html")
-    with open(arquivo_html, 'w', encoding='utf-8') as f:
+    html_file = os.path.join(folder, f"barcode_{processed_data[:10]}.html")
+    with open(html_file, 'w', encoding='utf-8') as f:
         f.write(html_content)
-    resultados['html'] = arquivo_html
+    results['html'] = html_file
 
-    return resultados
+    return results
 
 
-def visualizar_codigo(dados: str, pasta_destino: Optional[str] = None) -> str:
+def visualize_barcode(data: str, destination_folder: Optional[str] = None) -> str:
     """
     Função simplificada - Gera e retorna PNG limpo para visualização
 
     Args:
-        dados (str): Texto ou números
-        pasta_destino (str, optional): Pasta específica (usa padrão se None)
+        data (str): Texto ou números
+        destination_folder (str, optional): Pasta específica (usa padrão se None)
 
     Returns:
         str: Caminho do arquivo PNG (melhor para exibição limpa)
     """
-    resultado = gerar_codigo_limpo(dados, pasta_destino)
-    return resultado['png']
+    result = generate_clean_barcode(data, destination_folder)
+    return result['png']
 
 
-def codigo_barras_rapido(dados: str, pasta_destino: Optional[str] = None) -> str:
+def quick_barcode(data: str, destination_folder: Optional[str] = None) -> str:
     """
     Versão simplificada para gerar código de barras rapidamente
 
     Args:
-        dados (str): Texto ou números
-        pasta_destino (str, optional): Pasta específica (usa padrão se None)
+        data (str): Texto ou números
+        destination_folder (str, optional): Pasta específica (usa padrão se None)
 
     Returns:
         str: Caminho do arquivo PNG gerado
     """
-    return gerar_codigo_barras(dados, formato_saida='png', pasta_destino=pasta_destino)
+    return generate_barcode(data, output_format='png', destination_folder=destination_folder)
 
 
 # FUNÇÕES AUXILIARES INTERNAS
 
-def _detectar_tipo_codigo(dados: str) -> str:
+def _detect_code_type(data: str) -> str:
     """Detecta automaticamente o melhor tipo de código de barras"""
 
-    dados_limpos = dados.replace(' ', '')
+    clean_data = data.replace(' ', '')
 
-    if dados_limpos.isdigit():
-        if len(dados_limpos) == 13:
+    if clean_data.isdigit():
+        if len(clean_data) == 13:
             return 'ean13'
-        elif len(dados_limpos) == 8:
+        elif len(clean_data) == 8:
             return 'ean8'
-        elif len(dados_limpos) == 12:
+        elif len(clean_data) == 12:
             return 'upc'
         else:
             return 'code128'
 
-    elif not dados_limpos.isupper() or any(c in dados_limpos for c in ['@', '#', '$', '%']):
+    elif not clean_data.isupper() or any(c in clean_data for c in ['@', '#', '$', '%']):
         return 'code128'
 
     else:
         return 'code39'
 
 
-def _validar_e_processar_dados(dados: str, tipo_codigo: str) -> str:
+def _validate_and_process_data(data: str, code_type: str) -> str:
     """Valida e processa os dados conforme o tipo de código"""
 
-    dados_processados = dados.strip()
+    processed_data = data.strip()
 
-    if tipo_codigo == 'ean13':
-        numeros = re.sub(r'[^0-9]', '', dados_processados)
-        if len(numeros) < 12:
-            numeros = numeros.zfill(12)
-        elif len(numeros) > 12:
-            numeros = numeros[:12]
-        dados_processados = numeros
+    if code_type == 'ean13':
+        numbers = re.sub(r'[^0-9]', '', processed_data)
+        if len(numbers) < 12:
+            numbers = numbers.zfill(12)
+        elif len(numbers) > 12:
+            numbers = numbers[:12]
+        processed_data = numbers
 
-    elif tipo_codigo == 'ean8':
-        numeros = re.sub(r'[^0-9]', '', dados_processados)
-        if len(numeros) < 7:
-            numeros = numeros.zfill(7)
-        elif len(numeros) > 7:
-            numeros = numeros[:7]
-        dados_processados = numeros
+    elif code_type == 'ean8':
+        numbers = re.sub(r'[^0-9]', '', processed_data)
+        if len(numbers) < 7:
+            numbers = numbers.zfill(7)
+        elif len(numbers) > 7:
+            numbers = numbers[:7]
+        processed_data = numbers
 
-    elif tipo_codigo == 'upc':
-        numeros = re.sub(r'[^0-9]', '', dados_processados)
-        if len(numeros) < 11:
-            numeros = numeros.zfill(11)
-        elif len(numeros) > 11:
-            numeros = numeros[:11]
-        dados_processados = numeros
+    elif code_type == 'upc':
+        numbers = re.sub(r'[^0-9]', '', processed_data)
+        if len(numbers) < 11:
+            numbers = numbers.zfill(11)
+        elif len(numbers) > 11:
+            numbers = numbers[:11]
+        processed_data = numbers
 
-    elif tipo_codigo == 'code39':
-        dados_processados = dados_processados.upper()
-        caracteres_validos = set('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%')
-        if not all(c in caracteres_validos for c in dados_processados):
+    elif code_type == 'code39':
+        processed_data = processed_data.upper()
+        valid_characters = set('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%')
+        if not all(c in valid_characters for c in processed_data):
             raise ValueError("Code39 não suporta alguns caracteres do texto fornecido")
 
-    return dados_processados
+    return processed_data
 
 
-def obter_pasta_padrao() -> str:
+def get_default_folder() -> str:
     """
     Retorna a pasta padrão atual
 
     Returns:
         str: Caminho da pasta padrão
     """
-    return _PASTA_PADRAO
+    return _DEFAULT_FOLDER
 
 
-def listar_arquivos_gerados(pasta: Optional[str] = None) -> list:
+def list_generated_files(folder: Optional[str] = None) -> list:
     """
     Lista todos os códigos de barras gerados em uma pasta
 
     Args:
-        pasta (str, optional): Pasta para listar (usa padrão se None)
+        folder (str, optional): Pasta para listar (usa padrão se None)
 
     Returns:
         list: Lista de arquivos de código de barras encontrados
     """
-    pasta_busca = pasta if pasta is not None else _PASTA_PADRAO
+    search_folder = folder if folder is not None else _DEFAULT_FOLDER
 
-    if not os.path.exists(pasta_busca):
+    if not os.path.exists(search_folder):
         return []
 
-    arquivos = []
-    for arquivo in os.listdir(pasta_busca):
-        if arquivo.startswith('barcode_') and (
-                arquivo.endswith('.png') or arquivo.endswith('.svg') or arquivo.endswith('.html')):
-            arquivos.append(os.path.join(pasta_busca, arquivo))
+    files = []
+    for file in os.listdir(search_folder):
+        if file.startswith('barcode_') and (
+                file.endswith('.png') or file.endswith('.svg') or file.endswith('.html')):
+            files.append(os.path.join(search_folder, file))
 
-    return sorted(arquivos)
+    return sorted(files)
