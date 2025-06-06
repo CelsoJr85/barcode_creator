@@ -1,0 +1,29 @@
+# Gerador de Código de Barras Python
+# Dependências principais
+
+# Biblioteca principal para geração de códigos de barras
+python-barcode[images]>=0.15.1
+
+# Pillow é incluído automaticamente com python-barcode[images]
+# mas listamos aqui para documentação e compatibilidade
+Pillow>=10.0.0
+
+# Dependências opcionais para desenvolvimento
+# (remova o comentário se precisar)
+
+# Para testes
+# pytest>=7.0.0
+# pytest-cov>=4.0.0
+
+# Para formatação de código
+# black>=23.0.0
+# flake8>=6.0.0
+
+# Para documentação
+# sphinx>=6.0.0
+# sphinx-rtd-theme>=1.2.0
+
+# Para empacotamento
+# setuptools>=65.0.0
+# wheel>=0.38.0
+# twine>=4.0.0
