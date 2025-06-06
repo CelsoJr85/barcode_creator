@@ -15,7 +15,7 @@ Uma biblioteca Python completa e fácil de usar para gerar códigos de barras de
 
 ```bash
 # Clone o repositório
-git clone https://github.com/CelsoJr85/barcode_creator
+git clone <seu-repositorio>
 cd barcode-creator
 
 # Crie um ambiente virtual (recomendado)
@@ -126,7 +126,7 @@ arquivo = codigo_barras_rapido("987654321")
 Execute o testador interativo para experimentar todas as funcionalidades:
 
 ```bash
-python teste.py
+python teste_barcode.py
 ```
 
 ### Menu do Testador
@@ -288,7 +288,7 @@ definir_pasta_padrao('output/barcodes')     # Subpasta
 ```
 projeto/
 ├── barcode_creator.py        # Biblioteca principal
-├── teste.py                 # Interface de teste
+├── teste_barcode.py         # Interface de teste
 ├── requirements.txt         # Dependências do projeto
 ├── .gitignore              # Exclusões do Git
 ├── README.md               # Este arquivo
